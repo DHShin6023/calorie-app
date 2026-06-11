@@ -613,6 +613,38 @@ html, body {
 }
 .modal-cancel:active { background: var(--border); }
 
+/* ===== EDIT MODAL ===== */
+.edit-modal { max-height: 88vh; overflow-y: auto; }
+.edit-fields { display: flex; flex-direction: column; gap: 14px; }
+.edit-field { display: flex; flex-direction: column; gap: 6px; }
+.edit-label { font-size: 13px; font-weight: 600; color: var(--text-sub); }
+.edit-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.edit-input:focus { border-color: var(--green); }
+.edit-nutrients-row { display: flex; gap: 8px; }
+.edit-nutrients-row .edit-field { flex: 1; }
+.modal-save-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.modal-save-btn:active { opacity: 0.85; }
+
 /* ===== TOAST ===== */
 .toast {
   position: fixed;

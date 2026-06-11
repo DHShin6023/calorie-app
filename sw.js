@@ -1,4 +1,4 @@
-const CACHE = 'calorie-app-v14';
+const CACHE = 'calorie-app-v15';
 const ASSETS = ['./index.html', './style.css', './app.js', './manifest.json'];
 
 self.addEventListener('install', e => {

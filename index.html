@@ -149,6 +149,12 @@
         </svg>
       </button>
       <h2>분석 결과</h2>
+      <button class="icon-btn" id="btn-edit-result" aria-label="결과 수정">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
     </header>
     <div class="result-content">
       <img id="result-img" src="" alt="분석된 음식" class="result-img"/>
@@ -232,6 +238,47 @@
       </div>
       <div class="modal-candidates" id="modal-candidates"></div>
       <button class="modal-cancel" id="modal-cancel">취소</button>
+    </div>
+  </div>
+
+  <!-- 결과 수정 모달 -->
+  <div class="modal-overlay" id="edit-modal-overlay">
+    <div class="modal edit-modal">
+      <div class="modal-header">
+        <div class="modal-icon">✏️</div>
+        <div class="modal-title">결과 수정</div>
+        <div class="modal-sub">AI 결과가 틀렸다면 직접 수정해주세요</div>
+      </div>
+      <div class="edit-fields">
+        <div class="edit-field">
+          <label class="edit-label">음식 이름</label>
+          <input type="text" id="edit-food-name" class="edit-input" placeholder="예: 김치볶음밥"/>
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">중량</label>
+          <input type="text" id="edit-portion" class="edit-input" placeholder="예: 약 400g"/>
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">칼로리 (kcal)</label>
+          <input type="number" id="edit-calories" class="edit-input" placeholder="예: 500"/>
+        </div>
+        <div class="edit-nutrients-row">
+          <div class="edit-field">
+            <label class="edit-label">탄수화물 (g)</label>
+            <input type="number" id="edit-carb" class="edit-input" placeholder="65"/>
+          </div>
+          <div class="edit-field">
+            <label class="edit-label">단백질 (g)</label>
+            <input type="number" id="edit-protein" class="edit-input" placeholder="15"/>
+          </div>
+          <div class="edit-field">
+            <label class="edit-label">지방 (g)</label>
+            <input type="number" id="edit-fat" class="edit-input" placeholder="10"/>
+          </div>
+        </div>
+      </div>
+      <button class="modal-save-btn" id="edit-save-btn">수정 완료</button>
+      <button class="modal-cancel" id="edit-cancel-btn">취소</button>
     </div>
   </div>
 

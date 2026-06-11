@@ -254,19 +254,33 @@ async function analyzeFood() {
 [IDENTIFICATION RULES]
 STEP 1 - Identify the MAIN dish (largest/most prominent bowl or plate):
 - Focus on the foreground dish with the sharpest focus
-- Korean soup/stew identification guide:
-  * 짬뽕: orange-yellow broth + seafood (squid, clams, shrimp) + vegetables + noodles (may be hidden)
-  * 해물탕: spicy red broth + large seafood pieces, no noodles
-  * 김치찌개: red stew with kimchi chunks + tofu, small pot
-  * 된장찌개: brown/dark broth + tofu + vegetables, small pot
-  * 순두부찌개: soft white tofu in red/orange broth
-  * 설렁탕/곰탕: white milky broth + rice or noodles
+
+⚠️ CRITICAL — DRY vs WET:
+  - DRY dish (no visible liquid broth) → it is NEVER a stew(찌개) or soup(탕/국)
+  - WET dish (visible red/brown/white liquid broth pooling around food) → it may be 찌개/국/탕
+  - 볶음밥 looks RED/ORANGE but is DRY — the color comes from kimchi/gochujang staining the rice, NOT broth
+
+Korean rice dish guide:
+  * 김치볶음밥: DRY stir-fried rice, red-orange color from kimchi, individual rice grains visible, usually in large bowl, NO broth
+  * 비빔밥: colorful vegetables arranged on top of white rice, often with egg yolk, served in stone/ceramic bowl
+  * 볶음밥: plain DRY fried rice, brown/yellow color, with egg and vegetables
+
+Korean soup/stew guide (ALL have clearly visible liquid broth):
+  * 짬뽕: orange-yellow LIQUID broth + seafood (squid, clams, shrimp) + vegetables + noodles
+  * 해물탕: spicy red LIQUID broth + large seafood pieces, no noodles
+  * 김치찌개: red LIQUID broth with kimchi chunks + tofu, usually small pot
+  * 된장찌개: brown/dark LIQUID broth + tofu + vegetables, small pot
+  * 순두부찌개: soft white tofu pieces in red/orange LIQUID broth
+  * 설렁탕/곰탕: white milky LIQUID broth + rice or noodles
+
 - Use ONLY real, well-known Korean food names. Do NOT invent food names.
 
-STEP 2 - Identify SIDE dishes (separate bowls/cups clearly visible in foreground):
-- Include: drinks in cups/glasses, side dishes in clearly visible separate bowls
-- EXCLUDE: blurry background dishes, restaurant decor items, condiments/sauces (참기름, 고추장 etc.), items with no clear bowl/container
-- Do NOT add side items that are ingredients within the main dish
+STEP 2 - Identify ALL SIDE dishes (separate containers clearly visible):
+- Include ALL of these if present: drinks in glasses/cups (우유, 물, 주스), seaweed in tray (조미김/김), small side dish bowls
+- 조미김/김: thin dark-green/black seaweed sheets in small plastic tray or wrapper
+- 우유: white liquid in glass or cup
+- EXCLUDE: blurry background items, condiments (참기름, 고추장 etc.), chopsticks, utensils
+- Do NOT add items that are ingredients inside the main dish
 
 STEP 3 - Assign confidence (0-100) for main dish identification:
 - 90+: very certain | 70-89: similar dishes possible | below 70: hard to determine
@@ -433,6 +447,44 @@ function renderResult(r) {
     detailEl.textContent = r.description || '';
   }
 }
+
+// ===== EDIT RESULT MODAL =====
+document.getElementById('btn-edit-result').addEventListener('click', () => {
+  if (!pendingResult) return;
+  document.getElementById('edit-food-name').value = pendingResult.food_name || '';
+  document.getElementById('edit-portion').value = pendingResult.portion || '';
+  document.getElementById('edit-calories').value = Math.round(parseNum(pendingResult.calories)) || '';
+  document.getElementById('edit-carb').value = Math.round(parseNum(pendingResult.carbohydrate)) || '';
+  document.getElementById('edit-protein').value = Math.round(parseNum(pendingResult.protein)) || '';
+  document.getElementById('edit-fat').value = Math.round(parseNum(pendingResult.fat)) || '';
+  document.getElementById('edit-modal-overlay').classList.add('show');
+});
+
+document.getElementById('edit-save-btn').addEventListener('click', () => {
+  const name = document.getElementById('edit-food-name').value.trim();
+  if (!name) { showToast('음식 이름을 입력해주세요.'); return; }
+  pendingResult = {
+    ...pendingResult,
+    food_name: name,
+    portion: document.getElementById('edit-portion').value.trim() || pendingResult.portion,
+    calories: parseNum(document.getElementById('edit-calories').value) || parseNum(pendingResult.calories),
+    carbohydrate: parseNum(document.getElementById('edit-carb').value),
+    protein: parseNum(document.getElementById('edit-protein').value),
+    fat: parseNum(document.getElementById('edit-fat').value),
+    items: []
+  };
+  document.getElementById('edit-modal-overlay').classList.remove('show');
+  renderResult(pendingResult);
+  showToast('수정되었습니다.');
+});
+
+document.getElementById('edit-cancel-btn').addEventListener('click', () => {
+  document.getElementById('edit-modal-overlay').classList.remove('show');
+});
+document.getElementById('edit-modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget)
+    document.getElementById('edit-modal-overlay').classList.remove('show');
+});
 
 // ===== SAVE MEAL =====
 document.getElementById('btn-save').addEventListener('click', async () => {
