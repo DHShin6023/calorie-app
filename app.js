@@ -81,7 +81,8 @@ function parseNum(val) {
 }
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function fmtDate(dateStr) {
@@ -180,6 +181,24 @@ document.querySelectorAll('.meal-type-btn').forEach(btn => {
   });
 })();
 
+// ===== IMAGE COMPRESS =====
+// 아이폰 고화질 사진을 API 전송 전 1024px 이하로 압축
+function compressImage(base64, maxWidth = 1024) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1]);
+    };
+    img.onerror = () => resolve(base64); // 실패 시 원본 사용
+    img.src = 'data:image/jpeg;base64,' + base64;
+  });
+}
+
 // ===== AI ANALYZE =====
 document.getElementById('btn-analyze').addEventListener('click', analyzeFood);
 document.getElementById('btn-retry').addEventListener('click', () => showView('upload'));
@@ -202,7 +221,7 @@ async function callOpenRouter(apiKey, model, imageBase64, prompt) {
           { type: 'text', text: prompt }
         ]
       }],
-      max_tokens: 500
+      max_tokens: 1200
     })
   });
   if (!response.ok) {
@@ -226,6 +245,9 @@ async function analyzeFood() {
   }
 
   showView('analyzing');
+
+  // 고화질 사진 압축 (API 전송 최적화)
+  const compressedImage = await compressImage(currentImageBase64);
 
   const prompt = `당신은 세계 각국 음식에 정통한 전문 영양사입니다. 이미지에 보이는 모든 음식을 빠짐없이 분석해주세요.
 
@@ -271,7 +293,7 @@ async function analyzeFood() {
   for (const model of tryOrder) {
     try {
       document.querySelector('.analyzing-sub').textContent = `모델: ${model.split('/')[1]}`;
-      const data = await callOpenRouter(apiKey, model, currentImageBase64, prompt);
+      const data = await callOpenRouter(apiKey, model, compressedImage, prompt);
       const content = data.choices?.[0]?.message?.content || '';
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('AI 응답을 파싱할 수 없습니다.');
