@@ -91,6 +91,13 @@ function showView(name) {
   document.getElementById('view-' + name).classList.add('active');
 }
 
+// ===== MODELS =====
+const VALID_MODELS = [
+  'meta-llama/llama-3.2-11b-vision-instruct:free',
+  'google/gemini-2.0-flash-exp:free',
+  'qwen/qwen2.5-vl-72b-instruct:free'
+];
+
 // ===== STATE =====
 let currentImageBase64 = null;
 let currentMealType = '아침';
@@ -426,14 +433,9 @@ document.getElementById('btn-clear-data').addEventListener('click', async () => 
 
 // ===== INIT =====
 // 지원 종료된 모델이 localStorage에 남아있으면 교체
-const VALID_MODELS = [
-  'meta-llama/llama-3.2-11b-vision-instruct:free',
-  'google/gemini-2.0-flash-exp:free',
-  'qwen/qwen2.5-vl-72b-instruct:free'
-];
 const savedModel = getSetting('model', '');
 if (!VALID_MODELS.includes(savedModel)) {
-  setSetting('model', 'meta-llama/llama-3.2-11b-vision-instruct:free');
+  setSetting('model', VALID_MODELS[0]);
 }
 
 openDB().then(() => renderHome());
