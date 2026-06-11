@@ -398,7 +398,6 @@ html, body {
   line-height: 1.7;
   border: 1px solid var(--border);
   margin-bottom: 20px;
-  white-space: pre-wrap;
 }
 
 /* 개별 음식 항목 */

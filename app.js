@@ -100,7 +100,7 @@ function fmtDate(dateStr) {
 
 function showToast(msg, duration = 2200) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  t.innerHTML = escapeHTML(msg).replace(/\n/g, '<br>');
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), duration);
 }
@@ -482,16 +482,15 @@ function renderResult(r) {
       </div>
     `).join('');
     detailEl.style.display = '';
-    detailEl.innerHTML = `
-      <div class="items-label">인식된 음식 목록</div>
-      <div class="items-list">${itemRows}</div>
-      ${r.description ? `<div class="items-desc">${escapeHTML(r.description)}</div>` : ''}
-    `;
+    detailEl.style.whiteSpace = 'normal';
+    detailEl.innerHTML = `<div class="items-label">인식된 음식 목록</div><div class="items-list">${itemRows}</div>${r.description ? `<div class="items-desc">${escapeHTML(r.description)}</div>` : ''}`;
   } else if (r.description) {
     detailEl.style.display = '';
+    detailEl.style.whiteSpace = 'pre-wrap';
     detailEl.textContent = r.description;
   } else {
     detailEl.style.display = 'none';
+    detailEl.style.whiteSpace = '';
   }
 }
 
@@ -591,7 +590,7 @@ document.getElementById('btn-save').addEventListener('click', async () => {
   await saveMeal(meal);
 
   const meals = await getMealsByDate(todayStr());
-  const totalCal = meals.reduce((s, m) => s + m.calories, 0);
+  const totalCal = meals.reduce((s, m) => s + (m.calories || 0), 0);
   const goal = parseInt(getSetting('daily_goal', '2000')) || 2000;
   const exceeded = totalCal - goal;
 
@@ -612,7 +611,7 @@ async function renderHome() {
     d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
 
   const meals = await getMealsByDate(today);
-  const totalCal = meals.reduce((s, m) => s + m.calories, 0);
+  const totalCal = meals.reduce((s, m) => s + (m.calories || 0), 0);
   const totalCarb = meals.reduce((s, m) => s + (parseFloat(m.carbohydrate) || 0), 0);
   const totalProtein = meals.reduce((s, m) => s + (parseFloat(m.protein) || 0), 0);
   const totalFat = meals.reduce((s, m) => s + (parseFloat(m.fat) || 0), 0);
@@ -688,7 +687,7 @@ async function renderHistory() {
 
   el.innerHTML = dates.map(date => {
     const dayMeals = grouped[date];
-    const dayTotal = dayMeals.reduce((s, m) => s + m.calories, 0);
+    const dayTotal = dayMeals.reduce((s, m) => s + (m.calories || 0), 0);
     const items = dayMeals.slice().reverse().map(m => `
       <div class="meal-item">
         ${m.imageBase64
