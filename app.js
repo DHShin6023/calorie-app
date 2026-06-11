@@ -93,9 +93,10 @@ function showView(name) {
 
 // ===== MODELS =====
 const VALID_MODELS = [
-  'meta-llama/llama-3.2-11b-vision-instruct:free',
-  'google/gemini-2.0-flash-exp:free',
-  'qwen/qwen2.5-vl-72b-instruct:free'
+  'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'nvidia/nemotron-nano-12b-v2-vl:free',
+  'openrouter/free'
 ];
 
 // ===== STATE =====
@@ -124,7 +125,7 @@ document.getElementById('btn-history').addEventListener('click', () => {
 document.getElementById('btn-settings-open').addEventListener('click', () => {
   document.getElementById('input-api-key').value = getSetting('api_key', '');
   document.getElementById('input-goal').value = getSetting('daily_goal', '2000');
-  document.getElementById('select-model').value = getSetting('model', 'meta-llama/llama-3.2-11b-vision-instruct:free');
+  document.getElementById('select-model').value = getSetting('model', VALID_MODELS[0]);
   showView('settings');
 });
 
