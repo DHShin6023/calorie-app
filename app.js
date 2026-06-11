@@ -299,8 +299,6 @@ async function analyzeFood() {
 confidence가 85 이상이면 candidates는 빈 배열 []로 두세요.
 이미지에 음식이 없다면 food_name을 "음식 없음", calories를 0으로 응답하세요.`;
 
-이미지에 음식이 없다면 food_name을 "음식 없음", calories를 0으로 응답하세요.`;
-
   // 선택된 모델을 우선 시도, 실패 시 나머지 모델로 순서대로 재시도
   const selectedModel = getSetting('model', VALID_MODELS[0]);
   const tryOrder = [selectedModel, ...VALID_MODELS.filter(m => m !== selectedModel)];
