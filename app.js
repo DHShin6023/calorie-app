@@ -249,62 +249,65 @@ async function analyzeFood() {
   // 고화질 사진 압축 (API 전송 최적화)
   const compressedImage = await compressImage(currentImageBase64);
 
-  const prompt = `당신은 세계 각국 음식에 정통한 전문 영양사입니다.
+  const prompt = `You are a professional nutritionist expert in world cuisines. Analyze the food image and respond ONLY in Korean JSON format below.
 
-[식별 규칙]
-1. 그릇·용기·컵에 독립적으로 담긴 음식을 각각 하나의 항목으로 식별하세요.
-   - 메인 요리: 가장 큰 그릇에 담긴 음식
-   - 사이드: 별도 그릇·용기·컵에 담긴 음식 (음료, 반찬 포함)
-   ⚠️ 메인 요리 안의 재료(볶음밥 속 김치, 파, 양파 등)는 별도 항목으로 분리하지 마세요.
+[IDENTIFICATION RULES]
+STEP 1 - Identify the MAIN dish (largest/most prominent bowl or plate):
+- Focus on the foreground dish with the sharpest focus
+- Korean soup/stew identification guide:
+  * 짬뽕: orange-yellow broth + seafood (squid, clams, shrimp) + vegetables + noodles (may be hidden)
+  * 해물탕: spicy red broth + large seafood pieces, no noodles
+  * 김치찌개: red stew with kimchi chunks + tofu, small pot
+  * 된장찌개: brown/dark broth + tofu + vegetables, small pot
+  * 순두부찌개: soft white tofu in red/orange broth
+  * 설렁탕/곰탕: white milky broth + rice or noodles
+- Use ONLY real, well-known Korean food names. Do NOT invent food names.
 
-2. 포함 기준: 그릇/용기에 담겨 독립적으로 존재하면 포함하세요.
-   제외 기준: 그릇 없이 배경에 극히 일부만 보이거나 완전히 흐린 음식만 제외하세요.
+STEP 2 - Identify SIDE dishes (separate bowls/cups clearly visible in foreground):
+- Include: drinks in cups/glasses, side dishes in clearly visible separate bowls
+- EXCLUDE: blurry background dishes, restaurant decor items, condiments/sauces (참기름, 고추장 etc.), items with no clear bowl/container
+- Do NOT add side items that are ingredients within the main dish
 
-3. 볶음밥 종류를 정확히 구분하세요:
-   - 김치볶음밥: 붉은 양념색, 김치·파·양파가 섞인 볶음밥 (기름에 볶은 흔적)
-   - 비빔밥: 여러 색 나물이 올려진 밥, 주로 달걀 노른자 포함 (볶지 않음)
-   - 간장볶음밥: 갈색 계열, 햄·계란·채소 혼합
+STEP 3 - Assign confidence (0-100) for main dish identification:
+- 90+: very certain | 70-89: similar dishes possible | below 70: hard to determine
+- If confidence < 85, provide up to 3 candidates with calories
 
-4. confidence는 메인 음식 식별 확신도(0~100)입니다.
-   confidence 85 미만이면 candidates 배열에 후보 최대 3개와 각 칼로리를 담아주세요.
-
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
-⚠️ 모든 숫자값(calories, carbohydrate, protein, fat)은 단위 없는 순수 정수만 입력하세요.
+Respond ONLY with this JSON, no other text. All numeric values must be plain integers (no units):
 
 {
-  "confidence": 90,
-  "food_name": "메인 + 사이드 전체 (예: 김치볶음밥 + 조미김 + 우유)",
-  "portion": "전체 합산 중량 (예: 약 800g)",
-  "calories": 750,
-  "carbohydrate": 95,
+  "confidence": 75,
+  "food_name": "짬뽕",
+  "portion": "약 800g",
+  "calories": 650,
+  "carbohydrate": 80,
   "protein": 30,
-  "fat": 20,
+  "fat": 15,
   "items": [
     {
-      "name": "음식명",
-      "portion": "중량",
+      "name": "짬뽕",
+      "portion": "약 800g",
       "calories": 650,
       "carbohydrate": 80,
-      "protein": 25,
-      "fat": 18
+      "protein": 30,
+      "fat": 15
     }
   ],
   "candidates": [
     {
-      "name": "후보 음식명",
-      "reason": "이 음식으로 판단한 근거 (1문장)",
+      "name": "짬뽕",
+      "reason": "황주황색 국물에 해물과 채소가 보임",
       "portion": "약 800g",
       "calories": 650,
       "carbohydrate": 80,
-      "protein": 25,
-      "fat": 18
+      "protein": 30,
+      "fat": 15
     }
   ],
-  "description": "메인 음식 식별 근거 및 칼로리 설명 (2~3문장)"
+  "description": "한국어로 메인 음식 식별 근거와 칼로리 구성을 2~3문장으로 설명하세요."
 }
 
-confidence가 85 이상이면 candidates는 빈 배열 []로 두세요.
-이미지에 음식이 없다면 food_name을 "음식 없음", calories를 0으로 응답하세요.`;
+If confidence >= 85, set candidates to [].
+If no food visible, set food_name to "음식 없음" and calories to 0.`;
 
   // 선택된 모델을 우선 시도, 실패 시 나머지 모델로 순서대로 재시도
   const selectedModel = getSetting('model', VALID_MODELS[0]);
