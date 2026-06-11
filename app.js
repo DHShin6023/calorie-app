@@ -284,8 +284,13 @@ CUISINE REFERENCE GUIDE (examples only — recognize all foods, not just these):
 🍛 Other Asian:
   Curry(thick yellow/red sauce over rice), Pad Thai(stir-fried flat noodles+egg+bean sprouts), Pho(clear beef broth+rice noodles+herbs), Nasi goreng(Indonesian fried rice, dark brown)
 
-🥐 Bakery/Snacks:
-  Croissant, Bagel, Pancakes, Waffle, Donut, Ice cream, Cake, Chips/Crisps
+🍰 Bakery & Desserts:
+  Croissant(flaky layered pastry), Bagel(dense ring-shaped bread), Muffin, Scone, Waffle(grid-patterned), Donut/Doughnut(ring with glaze/topping), Pancakes(flat stacked cakes with syrup), Bread/Toast, Baguette, Cake/Cheesecake, Tiramisu, Ice cream/Gelato
+
+🍡 Korean Snacks & Rice Cakes (한국 간식/떡):
+  떡볶이(cylinder rice cakes in red spicy sauce), 순대(blood sausage, dark cylinder shapes), 튀김(deep-fried vegetables/seafood batter)
+  떡: 인절미(yellow soybean powder coated rice cake squares), 찹쌀떡(white mochi-style round rice cake, often with filling), 송편(half-moon shaped steamed rice cake), 약식(brown sweet rice cake with nuts/dates), 가래떡(long white cylinder rice cake), 시루떡(layered steamed rice cake)
+  과자/Snacks: 새우깡(puffed shrimp crackers), 포카칩/Chips(thin sliced potato chips), 초코파이(chocolate-coated marshmallow cake), 빼빼로/Pepero(chocolate-dipped stick biscuit), 눈깔사탕/Candy, Cookies/Biscuits, Popcorn, Nachos, Pretzel
 
 [STEP 2 — IDENTIFY SIDE DISHES]
 List ALL separate containers clearly visible in the foreground:
