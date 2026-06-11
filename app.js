@@ -253,75 +253,69 @@ async function analyzeFood() {
   // 고화질 사진 압축 (API 전송 최적화)
   const compressedImage = await compressImage(currentImageDataUrl);
 
-  const prompt = `You are a professional nutritionist expert in world cuisines. Analyze the food image and respond ONLY in Korean JSON format below.
+  const prompt = `You are a world-class nutritionist with expertise in ALL global cuisines. Analyze the food image and respond ONLY with the JSON format specified below.
 
-[IDENTIFICATION RULES]
-STEP 1 - Identify the MAIN dish (largest/most prominent bowl or plate):
-- Focus on the foreground dish with the sharpest focus
+[STEP 1 — IDENTIFY CUISINE & DISH]
+First determine the cuisine type by visual cues (ingredients, plating style, vessel type), then name the specific dish.
+- Do NOT default to Korean food. Identify the actual cuisine objectively.
+- Use the most widely recognized name for the dish (Korean name for Korean food, English/original name for others).
+- Use ONLY real, well-known food names. Never invent names.
 
-⚠️ CRITICAL — DRY vs WET:
-  - DRY dish (no visible liquid broth) → it is NEVER a stew(찌개) or soup(탕/국)
-  - WET dish (visible red/brown/white liquid broth pooling around food) → it may be 찌개/국/탕
-  - 볶음밥 looks RED/ORANGE but is DRY — the color comes from kimchi/gochujang staining the rice, NOT broth
+⚠️ UNIVERSAL RULE — DRY vs WET:
+  - DRY dish (no visible pooling liquid) → NEVER a soup or stew
+  - WET dish (clearly visible liquid broth filling the bowl) → may be soup/stew/curry
+  - Red/orange COLOR alone does NOT mean it is a stew — fried rice gets color from sauce, not broth
 
-Korean rice dish guide:
-  * 김치볶음밥: DRY stir-fried rice, red-orange color from kimchi, individual rice grains visible, usually in large bowl, NO broth
-  * 비빔밥: colorful vegetables arranged on top of white rice, often with egg yolk, served in stone/ceramic bowl
-  * 볶음밥: plain DRY fried rice, brown/yellow color, with egg and vegetables
+CUISINE REFERENCE GUIDE (examples only — recognize all foods, not just these):
 
-Korean soup/stew guide (ALL have clearly visible liquid broth):
-  * 짬뽕: orange-yellow LIQUID broth + seafood (squid, clams, shrimp) + vegetables + noodles
-  * 해물탕: spicy red LIQUID broth + large seafood pieces, no noodles
-  * 김치찌개: red LIQUID broth with kimchi chunks + tofu, usually small pot
-  * 된장찌개: brown/dark LIQUID broth + tofu + vegetables, small pot
-  * 순두부찌개: soft white tofu pieces in red/orange LIQUID broth
-  * 설렁탕/곰탕: white milky LIQUID broth + rice or noodles
+🇰🇷 Korean:
+  Dry: 김치볶음밥(DRY red-orange fried rice, individual grains, no broth), 비빔밥(colorful veggies on rice, stone bowl), 삼겹살(grilled pork belly), 불고기(marinated beef), 잡채(glass noodles+veggies)
+  Wet: 김치찌개(red broth+kimchi+tofu), 된장찌개(brown broth+tofu), 순두부찌개(soft tofu in red broth), 짬뽕(orange broth+seafood+noodles), 설렁탕(white milky broth)
 
-- Use ONLY real, well-known Korean food names. Do NOT invent food names.
+🇯🇵 Japanese:
+  라멘/Ramen(rich broth+noodles+toppings), 초밥/Sushi(rice+raw fish), 돈카츠/Tonkatsu(breaded fried pork+shredded cabbage), 우동/Udon(thick white noodles in broth), 덮밥/Donburi(toppings over rice bowl), 오니기리/Onigiri(triangular rice ball)
 
-STEP 2 - Identify ALL SIDE dishes (separate containers clearly visible):
-- Include ALL of these if present: drinks in glasses/cups (우유, 물, 주스), seaweed in tray (조미김/김), small side dish bowls
-- 조미김/김: thin dark-green/black seaweed sheets in small plastic tray or wrapper
-- 우유: white liquid in glass or cup
-- EXCLUDE: blurry background items, condiments (참기름, 고추장 etc.), chopsticks, utensils
-- Do NOT add items that are ingredients inside the main dish
+🇨🇳 Chinese:
+  짜장면/Jajangmyeon(black bean sauce+noodles), 볶음밥/Fried rice(dry, brown/yellow), 딤섬/Dim sum(steamed dumplings), 마파두부/Mapo tofu(red sauce+tofu+minced meat), 탕수육/Sweet and sour pork
 
-STEP 3 - Assign confidence (0-100) for main dish identification:
-- 90+: very certain | 70-89: similar dishes possible | below 70: hard to determine
-- If confidence < 85, provide up to 3 candidates with calories
+🍕 Western:
+  Pizza(flat dough+tomato sauce+cheese+toppings), Pasta/Spaghetti(noodles+sauce), Burger(bun+patty+toppings), Sandwich, Caesar salad, Steak, Fried chicken, French fries
 
-Respond ONLY with this JSON, no other text. All numeric values must be plain integers (no units):
+🍛 Other Asian:
+  Curry(thick yellow/red sauce over rice), Pad Thai(stir-fried flat noodles+egg+bean sprouts), Pho(clear beef broth+rice noodles+herbs), Nasi goreng(Indonesian fried rice, dark brown)
+
+🥐 Bakery/Snacks:
+  Croissant, Bagel, Pancakes, Waffle, Donut, Ice cream, Cake, Chips/Crisps
+
+[STEP 2 — IDENTIFY SIDE DISHES]
+List ALL separate containers clearly visible in the foreground:
+- Drinks in glass/cup: 우유(white liquid), juice(colored liquid), water
+- Korean seaweed: 조미김(thin dark-green sheets in plastic tray)
+- Small side bowls, bread rolls, salad cups
+- EXCLUDE: blurry/background items, condiments, utensils, napkins
+- Do NOT list ingredients inside the main dish as separate items
+
+[STEP 3 — CONFIDENCE]
+- 90+: very certain | 70-89: similar dishes possible | below 70: unclear
+- If confidence < 85, list up to 3 candidate dishes
+
+Respond ONLY with this JSON. All numeric values must be plain integers (no units):
 
 {
   "confidence": 75,
-  "food_name": "짬뽕",
-  "portion": "약 800g",
-  "calories": 650,
-  "carbohydrate": 80,
-  "protein": 30,
-  "fat": 15,
+  "food_name": "파스타",
+  "portion": "약 350g",
+  "calories": 520,
+  "carbohydrate": 70,
+  "protein": 18,
+  "fat": 16,
   "items": [
-    {
-      "name": "짬뽕",
-      "portion": "약 800g",
-      "calories": 650,
-      "carbohydrate": 80,
-      "protein": 30,
-      "fat": 15
-    }
+    { "name": "파스타", "portion": "약 350g", "calories": 520, "carbohydrate": 70, "protein": 18, "fat": 16 }
   ],
   "candidates": [
-    {
-      "name": "짬뽕",
-      "reason": "황주황색 국물에 해물과 채소가 보임",
-      "portion": "약 800g",
-      "calories": 650,
-      "carbohydrate": 80,
-      "protein": 30,
-      "fat": 15
-    }
+    { "name": "파스타", "reason": "토마토 소스와 면이 보임", "portion": "약 350g", "calories": 520, "carbohydrate": 70, "protein": 18, "fat": 16 }
   ],
-  "description": "한국어로 메인 음식 식별 근거와 칼로리 구성을 2~3문장으로 설명하세요."
+  "description": "한국어로 음식 식별 근거와 칼로리 구성을 2~3문장으로 설명하세요."
 }
 
 If confidence >= 85, set candidates to [].
