@@ -374,9 +374,9 @@ function showCandidateModal(parsed) {
         food_name: chosen.name,
         portion: chosen.portion,
         calories: chosen.calories,
-        carbohydrate: chosen.carbohydrate,
-        protein: chosen.protein,
-        fat: chosen.fat,
+        carbohydrate: chosen.carbohydrate ?? parsed.carbohydrate,
+        protein: chosen.protein ?? parsed.protein,
+        fat: chosen.fat ?? parsed.fat,
         items: [],
         description: chosen.reason
       };
@@ -426,7 +426,7 @@ function renderResult(r) {
     `).join('');
     detailEl.innerHTML = `
       <div class="items-label">인식된 음식 목록</div>
-      ${itemRows}
+      <div class="items-list">${itemRows}</div>
       ${r.description ? `<div class="items-desc">${r.description}</div>` : ''}
     `;
   } else {
@@ -500,7 +500,7 @@ async function renderHome() {
         <div class="meal-name">${m.foodName}</div>
         <div class="meal-meta">${m.mealType} · ${m.portion}</div>
       </div>
-      <div class="meal-cal">${m.calories.toLocaleString()}</div>
+      <div class="meal-cal">${m.calories.toLocaleString()} <span class="meal-cal-unit">kcal</span></div>
       <button class="meal-delete" data-id="${m.id}" aria-label="삭제">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
@@ -550,7 +550,7 @@ async function renderHistory() {
           <div class="meal-name">${m.foodName}</div>
           <div class="meal-meta">${m.mealType} · ${m.portion}</div>
         </div>
-        <div class="meal-cal">${m.calories.toLocaleString()}</div>
+        <div class="meal-cal">${m.calories.toLocaleString()} <span class="meal-cal-unit">kcal</span></div>
       </div>
     `).join('');
     return `

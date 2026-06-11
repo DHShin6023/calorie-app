@@ -189,6 +189,7 @@ html, body {
 .meal-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .meal-meta { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
 .meal-cal { font-size: 17px; font-weight: 700; color: var(--green-dark); }
+.meal-cal-unit { font-size: 12px; font-weight: 500; color: var(--text-sub); }
 .meal-delete {
   width: 28px; height: 28px;
   border: none; background: none;
@@ -417,7 +418,7 @@ html, body {
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
 }
-.item-row:last-of-type { border-bottom: none; }
+.items-list .item-row:last-child { border-bottom: none; }
 .item-info { display: flex; flex-direction: column; gap: 2px; }
 .item-name { font-size: 14px; font-weight: 600; }
 .item-portion { font-size: 12px; color: var(--text-sub); }
