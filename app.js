@@ -487,6 +487,43 @@ document.getElementById('edit-modal-overlay').addEventListener('click', e => {
     document.getElementById('edit-modal-overlay').classList.remove('show');
 });
 
+// ===== EXERCISE MODAL =====
+const EXERCISES = [
+  { emoji: '🚶', name: '빠른 걷기', kcalPerMin: 6 },
+  { emoji: '🏃', name: '조깅',      kcalPerMin: 9 },
+  { emoji: '🚴', name: '자전거 타기', kcalPerMin: 7 },
+  { emoji: '🏊', name: '수영',      kcalPerMin: 10 },
+  { emoji: '⚡', name: '줄넘기',    kcalPerMin: 12 },
+];
+
+function showExerciseModal(exceededKcal) {
+  document.getElementById('exercise-modal-sub').innerHTML =
+    `오늘 목표를 <span class="exercise-exceed">${exceededKcal.toLocaleString()} kcal</span> 초과했어요.<br>소모하려면 이렇게 운동해보세요!`;
+
+  document.getElementById('exercise-list').innerHTML = EXERCISES.map(ex => {
+    const mins = Math.ceil(exceededKcal / ex.kcalPerMin);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    const timeStr = h > 0 ? `${h}시간 ${m > 0 ? m + '분' : ''}`.trim() : `${mins}분`;
+    return `
+      <div class="exercise-row">
+        <span class="exercise-emoji">${ex.emoji}</span>
+        <span class="exercise-name">${ex.name}</span>
+        <span class="exercise-time">${timeStr}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('exercise-modal-overlay').classList.add('show');
+}
+
+document.getElementById('exercise-close-btn').addEventListener('click', () => {
+  document.getElementById('exercise-modal-overlay').classList.remove('show');
+});
+document.getElementById('exercise-modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget)
+    document.getElementById('exercise-modal-overlay').classList.remove('show');
+});
+
 // ===== SAVE MEAL =====
 document.getElementById('btn-save').addEventListener('click', async () => {
   if (!pendingResult) return;
@@ -504,9 +541,19 @@ document.getElementById('btn-save').addEventListener('click', async () => {
   };
   await saveMeal(meal);
   pendingResult = null;
+
+  const meals = await getMealsByDate(todayStr());
+  const totalCal = meals.reduce((s, m) => s + m.calories, 0);
+  const goal = parseInt(getSetting('daily_goal', '2000'));
+  const exceeded = totalCal - goal;
+
   showToast('기록에 저장되었습니다!');
   await renderHome();
   showView('home');
+
+  if (exceeded > 0) {
+    setTimeout(() => showExerciseModal(exceeded), 400);
+  }
 });
 
 // ===== HOME RENDER =====

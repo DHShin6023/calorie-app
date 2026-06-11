@@ -645,6 +645,29 @@ html, body {
 }
 .modal-save-btn:active { opacity: 0.85; }
 
+/* ===== EXERCISE MODAL ===== */
+.exercise-modal .modal-title { color: var(--danger); }
+.exercise-exceed {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--danger);
+  display: block;
+  margin: 4px 0 2px;
+}
+.exercise-list { display: flex; flex-direction: column; gap: 8px; }
+.exercise-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.exercise-emoji { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+.exercise-name { flex: 1; font-size: 15px; font-weight: 600; }
+.exercise-time { font-size: 15px; font-weight: 700; color: var(--green-dark); white-space: nowrap; }
+
 /* ===== TOAST ===== */
 .toast {
   position: fixed;
