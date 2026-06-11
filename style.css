@@ -530,6 +530,88 @@ html, body {
 }
 .danger-btn:active { background: #fca5a5; }
 
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--card);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 28px 20px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideUp 0.28s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.modal-header { text-align: center; }
+.modal-icon { font-size: 36px; margin-bottom: 8px; }
+.modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+
+.modal-candidates { display: flex; flex-direction: column; gap: 10px; }
+
+.candidate-btn {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.15s;
+}
+.candidate-btn:active { background: var(--green-light); border-color: var(--green); }
+
+.candidate-num {
+  width: 30px; height: 30px;
+  background: var(--green);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  flex-shrink: 0;
+}
+.candidate-info { flex: 1; }
+.candidate-name { font-size: 16px; font-weight: 700; }
+.candidate-reason { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+.candidate-cal {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--green-dark);
+  white-space: nowrap;
+}
+
+.modal-cancel {
+  width: 100%;
+  padding: 14px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.modal-cancel:active { background: var(--border); }
+
 /* ===== TOAST ===== */
 .toast {
   position: fixed;

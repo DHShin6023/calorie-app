@@ -251,23 +251,22 @@ async function analyzeFood() {
 
   const prompt = `당신은 세계 각국 음식에 정통한 전문 영양사입니다.
 
-[핵심 원칙 - 반드시 준수]
-1. 사진에서 선명하게 보이고 확실히 식별 가능한 음식만 포함하세요.
-   - 흐릿하거나, 부분적으로만 보이거나, 배경에 있는 음식은 제외하세요.
-   - 확신이 없으면 포함하지 마세요. 틀린 답보다 누락이 낫습니다.
-
-2. 메인 요리를 가장 먼저 정확히 식별하세요.
-   - 국물 색상, 재료, 그릇을 종합해 판단하세요.
-   - 짬뽕(황적색 국물+해물+면), 짜장면(검은 소스+면), 라멘(일본식 국물+면) 등을 혼동하지 마세요.
-   - 김치찌개(붉은 찌개+두부+김치), 된장찌개(갈색 국물+두부), 순두부찌개(흰색 두부+국물) 등을 혼동하지 마세요.
-
-3. 선명하게 보이는 사이드 메뉴(반찬·음료)만 추가로 포함하세요.
+[핵심 원칙]
+1. 사진에서 선명하게 보이는 음식만 포함하세요. 흐릿하거나 배경에 있는 음식은 제외하세요.
+2. 메인 요리를 정확히 식별하세요. 국물 색상·재료·그릇을 종합 판단하세요.
+3. confidence는 메인 음식 식별에 대한 확신도(0~100)입니다.
+   - 90 이상: 거의 확실
+   - 70~89: 유사한 음식이 있어 약간 불확실
+   - 70 미만: 여러 음식으로 오인 가능성 높음
+4. confidence가 85 미만이면, 가능성 있는 후보를 candidates 배열에 최대 3개 담아주세요.
+   각 후보에는 칼로리 정보도 함께 계산해주세요.
 
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
-⚠️ calories, carbohydrate, protein, fat 값은 반드시 단위 없는 순수 숫자(integer)로만 입력하세요. "약", "g", "kcal" 등 절대 포함 금지.
+⚠️ 모든 숫자값(calories, carbohydrate, protein, fat)은 단위 없는 순수 정수만 입력하세요.
 
 {
-  "food_name": "메인 + 확실한 사이드만 (예: 짬뽕 + 군만두)",
+  "confidence": 90,
+  "food_name": "메인 + 확실한 사이드 (예: 짬뽕 + 군만두)",
   "portion": "전체 합산 중량 (예: 약 800g)",
   "calories": 750,
   "carbohydrate": 95,
@@ -276,15 +275,29 @@ async function analyzeFood() {
   "items": [
     {
       "name": "음식명",
-      "portion": "중량 (예: 약 600g)",
+      "portion": "중량",
       "calories": 650,
       "carbohydrate": 80,
       "protein": 25,
       "fat": 18
     }
   ],
-  "description": "메인 음식 식별 근거 및 칼로리 구성 설명 (2~3문장)"
+  "candidates": [
+    {
+      "name": "후보 음식명",
+      "reason": "이 음식으로 판단한 근거 (1문장)",
+      "portion": "약 800g",
+      "calories": 650,
+      "carbohydrate": 80,
+      "protein": 25,
+      "fat": 18
+    }
+  ],
+  "description": "메인 음식 식별 근거 및 칼로리 설명 (2~3문장)"
 }
+
+confidence가 85 이상이면 candidates는 빈 배열 []로 두세요.
+이미지에 음식이 없다면 food_name을 "음식 없음", calories를 0으로 응답하세요.`;
 
 이미지에 음식이 없다면 food_name을 "음식 없음", calories를 0으로 응답하세요.`;
 
@@ -301,13 +314,21 @@ async function analyzeFood() {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('AI 응답을 파싱할 수 없습니다.');
 
-      pendingResult = JSON.parse(jsonMatch[0]);
-      pendingResult.imageBase64 = currentImageBase64;
-      pendingResult.mealType = currentMealType;
-      // 성공한 모델을 저장
+      const parsed = JSON.parse(jsonMatch[0]);
+      parsed.imageBase64 = currentImageBase64;
+      parsed.mealType = currentMealType;
       setSetting('model', model);
-      renderResult(pendingResult);
-      showView('result');
+
+      const confidence = parseNum(parsed.confidence);
+      if (confidence < 85 && parsed.candidates && parsed.candidates.length > 0) {
+        // 확신도 낮음 → 유저 선택 팝업
+        showView('upload');
+        showCandidateModal(parsed);
+      } else {
+        pendingResult = parsed;
+        renderResult(pendingResult);
+        showView('result');
+      }
       return;
     } catch (err) {
       lastError = err;
@@ -319,6 +340,54 @@ async function analyzeFood() {
   showToast('분석 실패: ' + (lastError?.message || '알 수 없는 오류'), 3500);
   console.error(lastError);
 }
+
+// ===== CANDIDATE MODAL =====
+function showCandidateModal(parsed) {
+  const overlay = document.getElementById('modal-overlay');
+  const container = document.getElementById('modal-candidates');
+
+  container.innerHTML = parsed.candidates.map((c, i) => `
+    <button class="candidate-btn" data-idx="${i}">
+      <div class="candidate-num">${i + 1}</div>
+      <div class="candidate-info">
+        <div class="candidate-name">${c.name}</div>
+        <div class="candidate-reason">${c.reason}</div>
+      </div>
+      <div class="candidate-cal">${Math.round(parseNum(c.calories))} kcal</div>
+    </button>
+  `).join('');
+
+  container.querySelectorAll('.candidate-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.idx);
+      const chosen = parsed.candidates[idx];
+      pendingResult = {
+        ...parsed,
+        food_name: chosen.name,
+        portion: chosen.portion,
+        calories: chosen.calories,
+        carbohydrate: chosen.carbohydrate,
+        protein: chosen.protein,
+        fat: chosen.fat,
+        items: [],
+        description: chosen.reason
+      };
+      overlay.classList.remove('show');
+      renderResult(pendingResult);
+      showView('result');
+    });
+  });
+
+  overlay.classList.add('show');
+}
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('show');
+});
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget)
+    document.getElementById('modal-overlay').classList.remove('show');
+});
 
 function renderResult(r) {
   const cal = parseNum(r.calories);
