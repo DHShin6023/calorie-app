@@ -117,7 +117,7 @@ document.getElementById('btn-history').addEventListener('click', () => {
 document.getElementById('btn-settings-open').addEventListener('click', () => {
   document.getElementById('input-api-key').value = getSetting('api_key', '');
   document.getElementById('input-goal').value = getSetting('daily_goal', '2000');
-  document.getElementById('select-model').value = getSetting('model', 'google/gemini-flash-1.5:free');
+  document.getElementById('select-model').value = getSetting('model', 'meta-llama/llama-3.2-11b-vision-instruct:free');
   showView('settings');
 });
 
@@ -181,7 +181,7 @@ async function analyzeFood() {
 
   showView('analyzing');
 
-  const model = getSetting('model', 'google/gemini-flash-1.5:free');
+  const model = getSetting('model', 'meta-llama/llama-3.2-11b-vision-instruct:free');
   const prompt = `이 이미지에 있는 음식을 분석해주세요.
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
 
