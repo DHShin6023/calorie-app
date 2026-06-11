@@ -265,7 +265,6 @@ html, body {
 }
 .upload-btn svg { width: 26px; height: 26px; color: var(--green-dark); }
 .upload-btn:active { background: var(--green-light); }
-.camera-btn { }
 
 .meal-type-row { display: flex; flex-direction: column; gap: 10px; }
 .meal-type-label { font-size: 14px; font-weight: 600; }
@@ -486,7 +485,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 8px;
 }
 .settings-title { font-size: 14px; font-weight: 600; }
 .settings-input {

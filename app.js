@@ -112,6 +112,7 @@ const VALID_MODELS = [
 
 // ===== STATE =====
 let currentImageBase64 = null;
+let currentImageDataUrl = null;
 let currentMealType = '아침';
 let pendingResult = null;
 
@@ -122,6 +123,9 @@ document.querySelectorAll('.back-btn').forEach(btn => {
 
 document.getElementById('btn-add').addEventListener('click', () => {
   currentImageBase64 = null;
+  currentImageDataUrl = null;
+  document.getElementById('input-camera').value = '';
+  document.getElementById('input-gallery').value = '';
   document.getElementById('preview-img').style.display = 'none';
   document.getElementById('preview-placeholder').style.display = 'flex';
   document.getElementById('btn-analyze').disabled = true;
@@ -146,6 +150,7 @@ function handleImageFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     const dataUrl = e.target.result;
+    currentImageDataUrl = dataUrl;
     currentImageBase64 = dataUrl.split(',')[1];
     const img = document.getElementById('preview-img');
     img.src = dataUrl;
@@ -182,8 +187,7 @@ document.querySelectorAll('.meal-type-btn').forEach(btn => {
 })();
 
 // ===== IMAGE COMPRESS =====
-// 아이폰 고화질 사진을 API 전송 전 1024px 이하로 압축
-function compressImage(base64, maxWidth = 1024) {
+function compressImage(dataUrl, maxWidth = 1024) {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
@@ -194,8 +198,8 @@ function compressImage(base64, maxWidth = 1024) {
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       resolve(canvas.toDataURL('image/jpeg', 0.82).split(',')[1]);
     };
-    img.onerror = () => resolve(base64); // 실패 시 원본 사용
-    img.src = 'data:image/jpeg;base64,' + base64;
+    img.onerror = () => resolve(dataUrl.split(',')[1]);
+    img.src = dataUrl;
   });
 }
 
@@ -247,7 +251,7 @@ async function analyzeFood() {
   showView('analyzing');
 
   // 고화질 사진 압축 (API 전송 최적화)
-  const compressedImage = await compressImage(currentImageBase64);
+  const compressedImage = await compressImage(currentImageDataUrl);
 
   const prompt = `You are a professional nutritionist expert in world cuisines. Analyze the food image and respond ONLY in Korean JSON format below.
 
@@ -428,7 +432,8 @@ function renderResult(r) {
   `;
 
   const detailEl = document.getElementById('result-detail');
-  if (r.items && r.items.length > 0) {
+  const hasItems = r.items && r.items.length > 0;
+  if (hasItems) {
     const itemRows = r.items.map(item => `
       <div class="item-row">
         <div class="item-info">
@@ -438,13 +443,17 @@ function renderResult(r) {
         <span class="item-cal">${Math.round(parseNum(item.calories))} kcal</span>
       </div>
     `).join('');
+    detailEl.style.display = '';
     detailEl.innerHTML = `
       <div class="items-label">인식된 음식 목록</div>
       <div class="items-list">${itemRows}</div>
       ${r.description ? `<div class="items-desc">${r.description}</div>` : ''}
     `;
+  } else if (r.description) {
+    detailEl.style.display = '';
+    detailEl.textContent = r.description;
   } else {
-    detailEl.textContent = r.description || '';
+    detailEl.style.display = 'none';
   }
 }
 
@@ -527,20 +536,21 @@ document.getElementById('exercise-modal-overlay').addEventListener('click', e =>
 // ===== SAVE MEAL =====
 document.getElementById('btn-save').addEventListener('click', async () => {
   if (!pendingResult) return;
+  const result = pendingResult;
+  pendingResult = null; // 즉시 초기화해서 더블클릭 중복저장 방지
   const meal = {
     date: todayStr(),
-    mealType: pendingResult.mealType,
-    foodName: pendingResult.food_name,
-    portion: pendingResult.portion,
-    calories: Math.round(parseNum(pendingResult.calories)),
-    carbohydrate: Math.round(parseNum(pendingResult.carbohydrate)),
-    protein: Math.round(parseNum(pendingResult.protein)),
-    fat: Math.round(parseNum(pendingResult.fat)),
-    imageBase64: pendingResult.imageBase64,
+    mealType: result.mealType,
+    foodName: result.food_name,
+    portion: result.portion,
+    calories: Math.round(parseNum(result.calories)),
+    carbohydrate: Math.round(parseNum(result.carbohydrate)),
+    protein: Math.round(parseNum(result.protein)),
+    fat: Math.round(parseNum(result.fat)),
+    imageBase64: result.imageBase64,
     createdAt: Date.now()
   };
   await saveMeal(meal);
-  pendingResult = null;
 
   const meals = await getMealsByDate(todayStr());
   const totalCal = meals.reduce((s, m) => s + m.calories, 0);
@@ -666,7 +676,7 @@ async function renderHistory() {
 }
 
 // ===== SETTINGS SAVE =====
-document.getElementById('btn-save-settings').addEventListener('click', () => {
+document.getElementById('btn-save-settings').addEventListener('click', async () => {
   const key = document.getElementById('input-api-key').value.trim();
   const goal = document.getElementById('input-goal').value.trim();
   const model = document.getElementById('select-model').value;
@@ -677,7 +687,7 @@ document.getElementById('btn-save-settings').addEventListener('click', () => {
   setSetting('daily_goal', goal || '2000');
   setSetting('model', model);
   showToast('설정이 저장되었습니다.');
-  renderHome();
+  await renderHome();
   showView('home');
 });
 
