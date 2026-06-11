@@ -70,6 +70,14 @@ function setSetting(key, val) {
 }
 
 // ===== UTILS =====
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // AI가 "약 480", "480kcal", "120g" 등 문자열로 숫자를 반환할 때 안전하게 파싱
 function parseNum(val) {
   if (typeof val === 'number') return isNaN(val) ? 0 : val;
@@ -132,8 +140,8 @@ document.getElementById('btn-add').addEventListener('click', () => {
   showView('upload');
 });
 
-document.getElementById('btn-history').addEventListener('click', () => {
-  renderHistory();
+document.getElementById('btn-history').addEventListener('click', async () => {
+  await renderHistory();
   showView('history');
 });
 
@@ -243,7 +251,7 @@ async function analyzeFood() {
     showView('settings');
     return;
   }
-  if (!currentImageBase64) {
+  if (!currentImageDataUrl) {
     showToast('사진을 먼저 선택해주세요.');
     return;
   }
@@ -375,8 +383,8 @@ function showCandidateModal(parsed) {
     <button class="candidate-btn" data-idx="${i}">
       <div class="candidate-num">${i + 1}</div>
       <div class="candidate-info">
-        <div class="candidate-name">${c.name}</div>
-        <div class="candidate-reason">${c.reason}</div>
+        <div class="candidate-name">${escapeHTML(c.name)}</div>
+        <div class="candidate-reason">${escapeHTML(c.reason)}</div>
       </div>
       <div class="candidate-cal">${Math.round(parseNum(c.calories))} kcal</div>
     </button>
@@ -553,7 +561,7 @@ document.getElementById('btn-save').addEventListener('click', async () => {
 
   const meals = await getMealsByDate(todayStr());
   const totalCal = meals.reduce((s, m) => s + m.calories, 0);
-  const goal = parseInt(getSetting('daily_goal', '2000'));
+  const goal = parseInt(getSetting('daily_goal', '2000')) || 2000;
   const exceeded = totalCal - goal;
 
   showToast('기록에 저장되었습니다!');
@@ -578,7 +586,7 @@ async function renderHome() {
   const totalProtein = meals.reduce((s, m) => s + (parseFloat(m.protein) || 0), 0);
   const totalFat = meals.reduce((s, m) => s + (parseFloat(m.fat) || 0), 0);
 
-  const goal = parseInt(getSetting('daily_goal', '2000'));
+  const goal = parseInt(getSetting('daily_goal', '2000')) || 2000;
   document.getElementById('total-cal').textContent = totalCal.toLocaleString();
   document.getElementById('goal-display').textContent = `/ ${goal.toLocaleString()} 목표`;
   document.getElementById('total-carb').textContent = Math.round(totalCarb) + 'g';
@@ -603,11 +611,11 @@ async function renderHome() {
   list.innerHTML = meals.slice().reverse().map(m => `
     <div class="meal-item">
       ${m.imageBase64
-        ? `<img class="meal-thumb" src="data:image/jpeg;base64,${m.imageBase64}" alt="${m.foodName}"/>`
+        ? `<img class="meal-thumb" src="data:image/jpeg;base64,${m.imageBase64}" alt="${escapeHTML(m.foodName)}"/>`
         : `<div class="meal-thumb-placeholder">${mealEmoji(m.mealType)}</div>`}
       <div class="meal-info">
-        <div class="meal-name">${m.foodName}</div>
-        <div class="meal-meta">${m.mealType} · ${m.portion}</div>
+        <div class="meal-name">${escapeHTML(m.foodName)}</div>
+        <div class="meal-meta">${escapeHTML(m.mealType)} · ${escapeHTML(m.portion)}</div>
       </div>
       <div class="meal-cal">${m.calories.toLocaleString()} <span class="meal-cal-unit">kcal</span></div>
       <button class="meal-delete" data-id="${m.id}" aria-label="삭제">
@@ -653,11 +661,11 @@ async function renderHistory() {
     const items = dayMeals.slice().reverse().map(m => `
       <div class="meal-item">
         ${m.imageBase64
-          ? `<img class="meal-thumb" src="data:image/jpeg;base64,${m.imageBase64}" alt="${m.foodName}"/>`
+          ? `<img class="meal-thumb" src="data:image/jpeg;base64,${m.imageBase64}" alt="${escapeHTML(m.foodName)}"/>`
           : `<div class="meal-thumb-placeholder">${mealEmoji(m.mealType)}</div>`}
         <div class="meal-info">
-          <div class="meal-name">${m.foodName}</div>
-          <div class="meal-meta">${m.mealType} · ${m.portion}</div>
+          <div class="meal-name">${escapeHTML(m.foodName)}</div>
+          <div class="meal-meta">${escapeHTML(m.mealType)} · ${escapeHTML(m.portion)}</div>
         </div>
         <div class="meal-cal">${m.calories.toLocaleString()} <span class="meal-cal-unit">kcal</span></div>
       </div>
@@ -694,7 +702,8 @@ document.getElementById('btn-clear-data').addEventListener('click', async () => 
   if (!confirm('모든 식사 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
   await clearAllMeals();
   showToast('모든 기록이 삭제되었습니다.');
-  renderHome();
+  await renderHome();
+  showView('home');
 });
 
 // ===== INIT =====
