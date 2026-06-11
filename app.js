@@ -453,10 +453,10 @@ document.getElementById('btn-edit-result').addEventListener('click', () => {
   if (!pendingResult) return;
   document.getElementById('edit-food-name').value = pendingResult.food_name || '';
   document.getElementById('edit-portion').value = pendingResult.portion || '';
-  document.getElementById('edit-calories').value = Math.round(parseNum(pendingResult.calories)) || '';
-  document.getElementById('edit-carb').value = Math.round(parseNum(pendingResult.carbohydrate)) || '';
-  document.getElementById('edit-protein').value = Math.round(parseNum(pendingResult.protein)) || '';
-  document.getElementById('edit-fat').value = Math.round(parseNum(pendingResult.fat)) || '';
+  document.getElementById('edit-calories').value = Math.round(parseNum(pendingResult.calories));
+  document.getElementById('edit-carb').value = Math.round(parseNum(pendingResult.carbohydrate));
+  document.getElementById('edit-protein').value = Math.round(parseNum(pendingResult.protein));
+  document.getElementById('edit-fat').value = Math.round(parseNum(pendingResult.fat));
   document.getElementById('edit-modal-overlay').classList.add('show');
 });
 
@@ -471,7 +471,8 @@ document.getElementById('edit-save-btn').addEventListener('click', () => {
     carbohydrate: parseNum(document.getElementById('edit-carb').value),
     protein: parseNum(document.getElementById('edit-protein').value),
     fat: parseNum(document.getElementById('edit-fat').value),
-    items: []
+    items: [],
+    description: ''
   };
   document.getElementById('edit-modal-overlay').classList.remove('show');
   renderResult(pendingResult);
