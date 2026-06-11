@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#22c55e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="칼로리AI" />
+  <title>칼로리 AI</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 홈 뷰 -->
+  <div id="view-home" class="view active">
+    <header class="app-header">
+      <h1>칼로리 AI</h1>
+      <button class="icon-btn" id="btn-settings-open" aria-label="설정">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="home-main">
+      <div class="date-label" id="today-label"></div>
+
+      <!-- 칼로리 링 -->
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="80"/>
+          <circle class="ring-fg" id="ring-progress" cx="100" cy="100" r="80"
+            stroke-dasharray="502" stroke-dashoffset="502"/>
+        </svg>
+        <div class="ring-text">
+          <span class="ring-current" id="total-cal">0</span>
+          <span class="ring-unit">kcal</span>
+          <span class="ring-goal" id="goal-display">/ 2,000 목표</span>
+        </div>
+      </div>
+
+      <!-- 영양소 요약 -->
+      <div class="nutrient-row">
+        <div class="nutrient-card">
+          <span class="n-label">탄수화물</span>
+          <span class="n-value" id="total-carb">0g</span>
+        </div>
+        <div class="nutrient-card">
+          <span class="n-label">단백질</span>
+          <span class="n-value" id="total-protein">0g</span>
+        </div>
+        <div class="nutrient-card">
+          <span class="n-label">지방</span>
+          <span class="n-value" id="total-fat">0g</span>
+        </div>
+      </div>
+
+      <!-- 오늘 식사 기록 -->
+      <div class="section-header">
+        <span>오늘의 식사</span>
+        <button class="text-btn" id="btn-history">전체 기록</button>
+      </div>
+      <div class="meal-list" id="today-meals"></div>
+    </main>
+
+    <button class="fab" id="btn-add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 카메라/업로드 뷰 -->
+  <div id="view-upload" class="view">
+    <header class="sub-header">
+      <button class="back-btn" data-target="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <h2>음식 사진 추가</h2>
+    </header>
+    <div class="upload-area">
+      <div class="preview-box" id="preview-box">
+        <img id="preview-img" src="" alt="미리보기" style="display:none"/>
+        <div class="preview-placeholder" id="preview-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <p>사진을 선택해주세요</p>
+        </div>
+      </div>
+      <div class="upload-btns">
+        <label class="upload-btn camera-btn">
+          <input type="file" id="input-camera" accept="image/*" capture="environment" hidden/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          카메라 촬영
+        </label>
+        <label class="upload-btn gallery-btn">
+          <input type="file" id="input-gallery" accept="image/*" hidden/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          갤러리 선택
+        </label>
+      </div>
+      <div class="meal-type-row">
+        <span class="meal-type-label">식사 유형</span>
+        <div class="meal-type-btns">
+          <button class="meal-type-btn active" data-type="아침">아침</button>
+          <button class="meal-type-btn" data-type="점심">점심</button>
+          <button class="meal-type-btn" data-type="저녁">저녁</button>
+          <button class="meal-type-btn" data-type="간식">간식</button>
+        </div>
+      </div>
+      <button class="analyze-btn" id="btn-analyze" disabled>
+        AI 분석 시작
+      </button>
+    </div>
+  </div>
+
+  <!-- 분석 중 뷰 -->
+  <div id="view-analyzing" class="view">
+    <div class="analyzing-content">
+      <div class="ai-spinner">
+        <div class="spinner-ring"></div>
+        <svg class="spinner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/>
+        </svg>
+      </div>
+      <p class="analyzing-text">AI가 음식을 분석하고 있어요...</p>
+      <p class="analyzing-sub">잠시만 기다려주세요</p>
+    </div>
+  </div>
+
+  <!-- 결과 뷰 -->
+  <div id="view-result" class="view">
+    <header class="sub-header">
+      <button class="back-btn" data-target="upload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <h2>분석 결과</h2>
+    </header>
+    <div class="result-content">
+      <img id="result-img" src="" alt="분석된 음식" class="result-img"/>
+      <div class="result-card">
+        <div class="result-food-name" id="result-food-name">음식명</div>
+        <div class="result-portion" id="result-portion">예상 중량</div>
+        <div class="result-calories">
+          <span class="result-cal-num" id="result-cal">0</span>
+          <span class="result-cal-unit">kcal</span>
+        </div>
+        <div class="result-nutrients" id="result-nutrients"></div>
+      </div>
+      <div class="result-detail" id="result-detail"></div>
+      <div class="result-actions">
+        <button class="save-btn" id="btn-save">기록에 저장</button>
+        <button class="retry-btn" id="btn-retry">다시 분석</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기록 뷰 -->
+  <div id="view-history" class="view">
+    <header class="sub-header">
+      <button class="back-btn" data-target="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <h2>전체 기록</h2>
+    </header>
+    <div class="history-content" id="history-content"></div>
+  </div>
+
+  <!-- 설정 뷰 -->
+  <div id="view-settings" class="view">
+    <header class="sub-header">
+      <button class="back-btn" data-target="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <h2>설정</h2>
+    </header>
+    <div class="settings-content">
+      <div class="settings-section">
+        <div class="settings-title">OpenRouter API 키</div>
+        <input type="password" id="input-api-key" class="settings-input"
+          placeholder="sk-or-v1-..." autocomplete="off"/>
+        <p class="settings-hint">openrouter.ai에서 발급받은 API 키를 입력하세요.<br>키는 이 기기에만 저장됩니다.</p>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">일일 칼로리 목표</div>
+        <input type="number" id="input-goal" class="settings-input"
+          placeholder="2000" min="500" max="9999"/>
+        <p class="settings-hint">하루 목표 칼로리를 입력하세요 (기본: 2,000 kcal)</p>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">AI 모델</div>
+        <select id="select-model" class="settings-input">
+          <option value="google/gemini-flash-1.5:free">Gemini Flash 1.5 (무료)</option>
+          <option value="meta-llama/llama-3.2-11b-vision-instruct:free">Llama 3.2 Vision 11B (무료)</option>
+          <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp (무료)</option>
+        </select>
+      </div>
+      <button class="save-settings-btn" id="btn-save-settings">설정 저장</button>
+      <div class="settings-section danger-zone">
+        <div class="settings-title">데이터 관리</div>
+        <button class="danger-btn" id="btn-clear-data">모든 기록 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 메시지 -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
