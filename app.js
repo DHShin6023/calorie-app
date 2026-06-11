@@ -70,6 +70,16 @@ function setSetting(key, val) {
 }
 
 // ===== UTILS =====
+// AI가 "약 480", "480kcal", "120g" 등 문자열로 숫자를 반환할 때 안전하게 파싱
+function parseNum(val) {
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  if (typeof val === 'string') {
+    const match = val.replace(/,/g, '').match(/[\d.]+/);
+    return match ? parseFloat(match[0]) : 0;
+  }
+  return 0;
+}
+
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -229,22 +239,23 @@ async function analyzeFood() {
 4. 음료, 유제품, 과일 등 부식도 반드시 포함하세요.
 
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
+⚠️ calories, carbohydrate, protein, fat 값은 반드시 단위 없는 순수 숫자(integer)로만 입력하세요. "약", "g", "kcal" 등 절대 포함 금지.
 
 {
-  "food_name": "전체 식사 대표명 (예: 김치볶음밥 + 김 + 우유)",
-  "portion": "전체 합산 중량",
-  "calories": 전체합산칼로리숫자,
-  "carbohydrate": 전체합산탄수화물숫자,
-  "protein": 전체합산단백질숫자,
-  "fat": 전체합산지방숫자,
+  "food_name": "전체 식사 대표명 (예: 김치볶음밥 + 조미김 + 우유)",
+  "portion": "전체 합산 중량 (예: 약 550g)",
+  "calories": 750,
+  "carbohydrate": 95,
+  "protein": 30,
+  "fat": 20,
   "items": [
     {
       "name": "음식명",
-      "portion": "중량",
-      "calories": 칼로리숫자,
-      "carbohydrate": 탄수화물숫자,
-      "protein": 단백질숫자,
-      "fat": 지방숫자
+      "portion": "중량 (예: 약 300g)",
+      "calories": 480,
+      "carbohydrate": 70,
+      "protein": 20,
+      "fat": 12
     }
   ],
   "description": "각 음식별 칼로리 근거 설명 (2~3문장)"
@@ -285,17 +296,21 @@ async function analyzeFood() {
 }
 
 function renderResult(r) {
+  const cal = parseNum(r.calories);
+  const carb = parseNum(r.carbohydrate);
+  const protein = parseNum(r.protein);
+  const fat = parseNum(r.fat);
+
   document.getElementById('result-img').src = `data:image/jpeg;base64,${r.imageBase64}`;
   document.getElementById('result-food-name').textContent = r.food_name;
   document.getElementById('result-portion').textContent = r.portion;
-  document.getElementById('result-cal').textContent = Math.round(r.calories).toLocaleString();
+  document.getElementById('result-cal').textContent = Math.round(cal).toLocaleString();
   document.getElementById('result-nutrients').innerHTML = `
-    <div class="r-nutrient"><div class="r-nutrient-label">탄수화물</div><div class="r-nutrient-value">${r.carbohydrate}g</div></div>
-    <div class="r-nutrient"><div class="r-nutrient-label">단백질</div><div class="r-nutrient-value">${r.protein}g</div></div>
-    <div class="r-nutrient"><div class="r-nutrient-label">지방</div><div class="r-nutrient-value">${r.fat}g</div></div>
+    <div class="r-nutrient"><div class="r-nutrient-label">탄수화물</div><div class="r-nutrient-value">${Math.round(carb)}g</div></div>
+    <div class="r-nutrient"><div class="r-nutrient-label">단백질</div><div class="r-nutrient-value">${Math.round(protein)}g</div></div>
+    <div class="r-nutrient"><div class="r-nutrient-label">지방</div><div class="r-nutrient-value">${Math.round(fat)}g</div></div>
   `;
 
-  // 개별 음식 항목 표시
   const detailEl = document.getElementById('result-detail');
   if (r.items && r.items.length > 0) {
     const itemRows = r.items.map(item => `
@@ -304,7 +319,7 @@ function renderResult(r) {
           <span class="item-name">${item.name}</span>
           <span class="item-portion">${item.portion}</span>
         </div>
-        <span class="item-cal">${Math.round(item.calories)} kcal</span>
+        <span class="item-cal">${Math.round(parseNum(item.calories))} kcal</span>
       </div>
     `).join('');
     detailEl.innerHTML = `
@@ -325,10 +340,10 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     mealType: pendingResult.mealType,
     foodName: pendingResult.food_name,
     portion: pendingResult.portion,
-    calories: Math.round(pendingResult.calories),
-    carbohydrate: pendingResult.carbohydrate,
-    protein: pendingResult.protein,
-    fat: pendingResult.fat,
+    calories: Math.round(parseNum(pendingResult.calories)),
+    carbohydrate: Math.round(parseNum(pendingResult.carbohydrate)),
+    protein: Math.round(parseNum(pendingResult.protein)),
+    fat: Math.round(parseNum(pendingResult.fat)),
     imageBase64: pendingResult.imageBase64,
     createdAt: Date.now()
   };
