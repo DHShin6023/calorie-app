@@ -682,7 +682,8 @@ html, body {
   opacity: 0;
   transition: opacity 0.25s, transform 0.25s;
   z-index: 1000;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
   max-width: calc(100vw - 48px);
   text-align: center;
 }

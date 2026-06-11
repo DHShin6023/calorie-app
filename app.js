@@ -238,7 +238,9 @@ async function callOpenRouter(apiKey, model, imageBase64, prompt) {
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || `API 오류 (${response.status})`);
+    const error = new Error(err.error?.message || `API 오류 (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
   return response.json();
 }
@@ -339,33 +341,49 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
   const tryOrder = [selectedModel, ...VALID_MODELS.filter(m => m !== selectedModel)];
 
   let lastError = null;
+  let rateLimitRetried = false;
+
   for (const model of tryOrder) {
-    try {
-      document.querySelector('.analyzing-sub').textContent = `모델: ${model.split('/')[1]}`;
-      const data = await callOpenRouter(apiKey, model, compressedImage, prompt);
-      const content = data.choices?.[0]?.message?.content || '';
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('AI 응답을 파싱할 수 없습니다.');
+    let shouldRetry = true;
 
-      const parsed = JSON.parse(jsonMatch[0]);
-      parsed.imageBase64 = currentImageBase64;
-      parsed.mealType = currentMealType;
-      setSetting('model', model);
+    while (shouldRetry) {
+      shouldRetry = false;
+      try {
+        document.querySelector('.analyzing-sub').textContent = `모델: ${model.split('/')[1]}`;
+        const data = await callOpenRouter(apiKey, model, compressedImage, prompt);
+        const content = data.choices?.[0]?.message?.content || '';
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('AI 응답을 파싱할 수 없습니다.');
 
-      const confidence = parseNum(parsed.confidence);
-      if (confidence < 85 && parsed.candidates && parsed.candidates.length > 0) {
-        // 확신도 낮음 → 유저 선택 팝업
-        showView('upload');
-        showCandidateModal(parsed);
-      } else {
-        pendingResult = parsed;
-        renderResult(pendingResult);
-        showView('result');
+        const parsed = JSON.parse(jsonMatch[0]);
+        parsed.imageBase64 = compressedImage;
+        parsed.mealType = currentMealType;
+        setSetting('model', model);
+
+        const confidence = parseNum(parsed.confidence);
+        if (confidence < 85 && parsed.candidates && parsed.candidates.length > 0) {
+          // 확신도 낮음 → 유저 선택 팝업
+          showView('upload');
+          showCandidateModal(parsed);
+        } else {
+          pendingResult = parsed;
+          renderResult(pendingResult);
+          showView('result');
+        }
+        return;
+      } catch (err) {
+        if (!rateLimitRetried && (err.status === 429 || /rate.?limit/i.test(err.message))) {
+          rateLimitRetried = true;
+          shouldRetry = true;
+          for (let sec = 20; sec > 0; sec--) {
+            document.querySelector('.analyzing-sub').textContent = `분당 요청 한도 — ${sec}초 후 자동 재시도`;
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        } else {
+          lastError = err;
+          console.warn(`모델 ${model} 실패:`, err.message);
+        }
       }
-      return;
-    } catch (err) {
-      lastError = err;
-      console.warn(`모델 ${model} 실패:`, err.message);
     }
   }
 
@@ -444,8 +462,8 @@ function renderResult(r) {
     const itemRows = r.items.map(item => `
       <div class="item-row">
         <div class="item-info">
-          <span class="item-name">${item.name}</span>
-          <span class="item-portion">${item.portion}</span>
+          <span class="item-name">${escapeHTML(item.name)}</span>
+          <span class="item-portion">${escapeHTML(item.portion)}</span>
         </div>
         <span class="item-cal">${Math.round(parseNum(item.calories))} kcal</span>
       </div>
@@ -454,7 +472,7 @@ function renderResult(r) {
     detailEl.innerHTML = `
       <div class="items-label">인식된 음식 목록</div>
       <div class="items-list">${itemRows}</div>
-      ${r.description ? `<div class="items-desc">${r.description}</div>` : ''}
+      ${r.description ? `<div class="items-desc">${escapeHTML(r.description)}</div>` : ''}
     `;
   } else if (r.description) {
     detailEl.style.display = '';
