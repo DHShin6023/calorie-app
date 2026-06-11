@@ -166,6 +166,34 @@ document.querySelectorAll('.meal-type-btn').forEach(btn => {
 document.getElementById('btn-analyze').addEventListener('click', analyzeFood);
 document.getElementById('btn-retry').addEventListener('click', () => showView('upload'));
 
+async function callOpenRouter(apiKey, model, imageBase64, prompt) {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': location.href,
+      'X-Title': 'Calorie AI App'
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+          { type: 'text', text: prompt }
+        ]
+      }],
+      max_tokens: 500
+    })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API 오류 (${response.status})`);
+  }
+  return response.json();
+}
+
 async function analyzeFood() {
   const apiKey = getSetting('api_key', '');
   if (!apiKey) {
@@ -181,7 +209,6 @@ async function analyzeFood() {
 
   showView('analyzing');
 
-  const model = getSetting('model', 'meta-llama/llama-3.2-11b-vision-instruct:free');
   const prompt = `이 이미지에 있는 음식을 분석해주세요.
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
 
@@ -198,49 +225,36 @@ async function analyzeFood() {
 음식이 여러 가지라면 모두 합산해서 하나의 JSON으로 응답하고 food_name에 대표 음식명을 적어주세요.
 이미지에 음식이 없다면 food_name을 "음식 없음", calories를 0으로 응답하세요.`;
 
-  try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': location.href,
-        'X-Title': 'Calorie AI App'
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${currentImageBase64}` } },
-            { type: 'text', text: prompt }
-          ]
-        }],
-        max_tokens: 500
-      })
-    });
+  // 선택된 모델을 우선 시도, 실패 시 나머지 모델로 순서대로 재시도
+  const selectedModel = getSetting('model', VALID_MODELS[0]);
+  const tryOrder = [selectedModel, ...VALID_MODELS.filter(m => m !== selectedModel)];
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error?.message || `API 오류 (${response.status})`);
+  let lastError = null;
+  for (const model of tryOrder) {
+    try {
+      document.querySelector('.analyzing-sub').textContent = `모델: ${model.split('/')[1]}`;
+      const data = await callOpenRouter(apiKey, model, currentImageBase64, prompt);
+      const content = data.choices?.[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('AI 응답을 파싱할 수 없습니다.');
+
+      pendingResult = JSON.parse(jsonMatch[0]);
+      pendingResult.imageBase64 = currentImageBase64;
+      pendingResult.mealType = currentMealType;
+      // 성공한 모델을 저장
+      setSetting('model', model);
+      renderResult(pendingResult);
+      showView('result');
+      return;
+    } catch (err) {
+      lastError = err;
+      console.warn(`모델 ${model} 실패:`, err.message);
     }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('AI 응답을 파싱할 수 없습니다.');
-
-    pendingResult = JSON.parse(jsonMatch[0]);
-    pendingResult.imageBase64 = currentImageBase64;
-    pendingResult.mealType = currentMealType;
-    renderResult(pendingResult);
-    showView('result');
-
-  } catch (err) {
-    showView('upload');
-    showToast('분석 실패: ' + err.message, 3500);
-    console.error(err);
   }
+
+  showView('upload');
+  showToast('분석 실패: ' + (lastError?.message || '알 수 없는 오류'), 3500);
+  console.error(lastError);
 }
 
 function renderResult(r) {
@@ -411,6 +425,17 @@ document.getElementById('btn-clear-data').addEventListener('click', async () => 
 });
 
 // ===== INIT =====
+// 지원 종료된 모델이 localStorage에 남아있으면 교체
+const VALID_MODELS = [
+  'meta-llama/llama-3.2-11b-vision-instruct:free',
+  'google/gemini-2.0-flash-exp:free',
+  'qwen/qwen2.5-vl-72b-instruct:free'
+];
+const savedModel = getSetting('model', '');
+if (!VALID_MODELS.includes(savedModel)) {
+  setSetting('model', 'meta-llama/llama-3.2-11b-vision-instruct:free');
+}
+
 openDB().then(() => renderHome());
 
 // ===== SERVICE WORKER =====
