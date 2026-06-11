@@ -113,6 +113,8 @@ function showView(name) {
 // ===== MODELS =====
 const VALID_MODELS = [
   'google/gemma-4-31b-it:free',
+  'meta-llama/llama-4-scout:free',
+  'qwen/qwen2.5-vl-72b-instruct:free',
   'google/gemma-4-26b-a4b-it:free',
   'nvidia/nemotron-nano-12b-v2-vl:free',
   'openrouter/free'
@@ -342,6 +344,7 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
 
   let lastError = null;
   let rateLimitRetried = false;
+  let allRateLimited = true;
 
   for (const model of tryOrder) {
     let shouldRetry = true;
@@ -372,7 +375,12 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
         }
         return;
       } catch (err) {
-        if (!rateLimitRetried && (err.status === 429 || /rate.?limit/i.test(err.message))) {
+        const isRateLimit = err.status === 429 || /rate.?limit/i.test(err.message);
+        const isPerMinute = /per.?min/i.test(err.message);
+        if (!isRateLimit) allRateLimited = false;
+
+        if (!rateLimitRetried && isRateLimit && isPerMinute) {
+          // 분당 한도: 20초 대기 후 같은 모델 재시도
           rateLimitRetried = true;
           shouldRetry = true;
           for (let sec = 20; sec > 0; sec--) {
@@ -380,6 +388,7 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
             await new Promise(r => setTimeout(r, 1000));
           }
         } else {
+          // 일일 한도 or 기타 오류: 바로 다음 모델로
           lastError = err;
           console.warn(`모델 ${model} 실패:`, err.message);
         }
@@ -388,7 +397,11 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
   }
 
   showView('upload');
-  showToast('분석 실패: ' + (lastError?.message || '알 수 없는 오류'), 3500);
+  if (allRateLimited && lastError) {
+    showToast('오늘 무료 분석 한도를 모두 소진했어요 😅\n내일 오전 9시(한국시간)에 초기화됩니다.', 5000);
+  } else {
+    showToast('분석 실패: ' + (lastError?.message || '알 수 없는 오류'), 3500);
+  }
   console.error(lastError);
 }
 
