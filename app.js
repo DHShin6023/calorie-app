@@ -217,20 +217,38 @@ async function analyzeFood() {
 
   showView('analyzing');
 
-  const prompt = `이 이미지에 있는 음식을 분석해주세요.
+  const prompt = `당신은 한국 음식 전문 영양사입니다. 이미지에 보이는 모든 음식을 빠짐없이 분석해주세요.
+
+[중요 규칙]
+1. 메인 요리뿐 아니라 반찬, 음료, 국, 김 등 사진에 보이는 모든 음식을 개별적으로 식별하세요.
+2. 한국 음식을 정확히 구분하세요:
+   - 김치볶음밥: 붉은 김치와 함께 볶은 밥, 빨간 양념색
+   - 비빔밥: 여러 색깔의 나물과 고추장을 얹은 밥, 달걀 있는 경우 많음
+   - 볶음밥: 간장 계열로 볶은 밥, 갈색 계열
+3. 우유, 음료, 김, 과일 등 부식도 반드시 포함하세요.
+
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
 
 {
-  "food_name": "음식 이름 (한국어)",
-  "portion": "예상 중량 또는 분량 (예: 약 250g, 1인분 등)",
-  "calories": 숫자,
-  "carbohydrate": 숫자,
-  "protein": 숫자,
-  "fat": 숫자,
-  "description": "음식에 대한 간단한 설명과 칼로리 구성 (2~3문장)"
+  "food_name": "전체 식사 대표명 (예: 김치볶음밥 + 김 + 우유)",
+  "portion": "전체 합산 중량",
+  "calories": 전체합산칼로리숫자,
+  "carbohydrate": 전체합산탄수화물숫자,
+  "protein": 전체합산단백질숫자,
+  "fat": 전체합산지방숫자,
+  "items": [
+    {
+      "name": "음식명",
+      "portion": "중량",
+      "calories": 칼로리숫자,
+      "carbohydrate": 탄수화물숫자,
+      "protein": 단백질숫자,
+      "fat": 지방숫자
+    }
+  ],
+  "description": "각 음식별 칼로리 근거 설명 (2~3문장)"
 }
 
-음식이 여러 가지라면 모두 합산해서 하나의 JSON으로 응답하고 food_name에 대표 음식명을 적어주세요.
 이미지에 음식이 없다면 food_name을 "음식 없음", calories를 0으로 응답하세요.`;
 
   // 선택된 모델을 우선 시도, 실패 시 나머지 모델로 순서대로 재시도
@@ -275,7 +293,27 @@ function renderResult(r) {
     <div class="r-nutrient"><div class="r-nutrient-label">단백질</div><div class="r-nutrient-value">${r.protein}g</div></div>
     <div class="r-nutrient"><div class="r-nutrient-label">지방</div><div class="r-nutrient-value">${r.fat}g</div></div>
   `;
-  document.getElementById('result-detail').textContent = r.description || '';
+
+  // 개별 음식 항목 표시
+  const detailEl = document.getElementById('result-detail');
+  if (r.items && r.items.length > 0) {
+    const itemRows = r.items.map(item => `
+      <div class="item-row">
+        <div class="item-info">
+          <span class="item-name">${item.name}</span>
+          <span class="item-portion">${item.portion}</span>
+        </div>
+        <span class="item-cal">${Math.round(item.calories)} kcal</span>
+      </div>
+    `).join('');
+    detailEl.innerHTML = `
+      <div class="items-label">인식된 음식 목록</div>
+      ${itemRows}
+      ${r.description ? `<div class="items-desc">${r.description}</div>` : ''}
+    `;
+  } else {
+    detailEl.textContent = r.description || '';
+  }
 }
 
 // ===== SAVE MEAL =====

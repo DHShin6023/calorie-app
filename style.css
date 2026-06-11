@@ -401,6 +401,36 @@ html, body {
   white-space: pre-wrap;
 }
 
+/* 개별 음식 항목 */
+.items-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.item-row:last-of-type { border-bottom: none; }
+.item-info { display: flex; flex-direction: column; gap: 2px; }
+.item-name { font-size: 14px; font-weight: 600; }
+.item-portion { font-size: 12px; color: var(--text-sub); }
+.item-cal { font-size: 15px; font-weight: 700; color: var(--green-dark); }
+.items-desc {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
 .result-actions { display: flex; flex-direction: column; gap: 10px; }
 .save-btn {
   width: 100%;
