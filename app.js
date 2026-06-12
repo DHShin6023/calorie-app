@@ -361,7 +361,11 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
         const parsed = JSON.parse(jsonMatch[0]);
         parsed.imageBase64 = compressedImage;
         parsed.mealType = currentMealType;
-        setSetting('model', model);
+
+        if (model !== selectedModel) {
+          const modelName = model.split('/')[1]?.replace(':free', '') || model;
+          showToast(`선택한 모델 한도 초과 →\n${modelName}으로 대체 분석했어요`, 3500);
+        }
 
         const confidence = parseNum(parsed.confidence);
         if (confidence < 85 && parsed.candidates && parsed.candidates.length > 0) {
