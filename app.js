@@ -343,11 +343,11 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
   const tryOrder = [selectedModel, ...VALID_MODELS.filter(m => m !== selectedModel)];
 
   let lastError = null;
-  let rateLimitRetried = false;
   let allRateLimited = true;
 
   for (const model of tryOrder) {
     let shouldRetry = true;
+    let rateLimitRetried = false;
 
     while (shouldRetry) {
       shouldRetry = false;
@@ -363,7 +363,9 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
         parsed.mealType = currentMealType;
 
         if (model !== selectedModel) {
-          const modelName = model.split('/')[1]?.replace(':free', '') || model;
+          const modelName = model === 'openrouter/free'
+            ? 'OpenRouter 자동선택'
+            : (model.split('/')[1]?.replace(':free', '') || model);
           showToast(`선택한 모델 한도 초과 →\n${modelName}으로 대체 분석했어요`, 3500);
         }
 
@@ -517,7 +519,7 @@ document.getElementById('edit-save-btn').addEventListener('click', () => {
     ...pendingResult,
     food_name: name,
     portion: document.getElementById('edit-portion').value.trim() || pendingResult.portion,
-    calories: parseNum(document.getElementById('edit-calories').value) || parseNum(pendingResult.calories),
+    calories: parseNum(document.getElementById('edit-calories').value),
     carbohydrate: parseNum(document.getElementById('edit-carb').value),
     protein: parseNum(document.getElementById('edit-protein').value),
     fat: parseNum(document.getElementById('edit-fat').value),
