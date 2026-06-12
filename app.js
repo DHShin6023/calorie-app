@@ -112,7 +112,7 @@ function showView(name) {
 
 // ===== MODELS =====
 const VALID_MODELS = [
-  'anthropic/claude-sonnet-4-6',
+  'anthropic/claude-sonnet-4.6',
   'google/gemma-4-31b-it:free',
   'meta-llama/llama-4-scout:free',
   'qwen/qwen2.5-vl-72b-instruct:free',
