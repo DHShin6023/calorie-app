@@ -112,6 +112,7 @@ function showView(name) {
 
 // ===== MODELS =====
 const VALID_MODELS = [
+  'anthropic/claude-sonnet-4-6',
   'google/gemma-4-31b-it:free',
   'meta-llama/llama-4-scout:free',
   'qwen/qwen2.5-vl-72b-instruct:free',
@@ -354,7 +355,10 @@ If no food visible, set food_name to "음식 없음" and calories to 0.`;
       try {
         document.querySelector('.analyzing-sub').textContent = `모델: ${model.split('/')[1]}`;
         const data = await callOpenRouter(apiKey, model, compressedImage, prompt);
-        const content = data.choices?.[0]?.message?.content || '';
+        let content = data.choices?.[0]?.message?.content ?? '';
+        if (Array.isArray(content)) {
+          content = content.find(b => b?.type === 'text')?.text ?? '';
+        }
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('AI 응답을 파싱할 수 없습니다.');
 
